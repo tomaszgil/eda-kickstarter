@@ -1,0 +1,261 @@
+---
+title: "Project 1 - Exploratory Data Analysis in R"
+author: "Łukasz Kobyłecki (127292), Tomasz Gil (127295)"
+date: "2-12-2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This is a report from project "Exploratory Data Analysis" in R. The report contains six sections:
+
+* Introduction
+* Preprocessing
+* Data summary
+* Univariate analysis
+* Multivariate analysis
+* Conclusions
+
+We have used a data set from Kaggle (https://www.kaggle.com/kemical/kickstarter-projects?fbclid=IwAR2xYRsLXeEKvpLpuQ7ONYRzUZsg5keYoskL6BGS29Do1f5tscFmcv40szo) which is connected with Kickstarter Platform projects
+
+
+## Preprocessing
+
+First of all we have to import packages.
+```{r message = FALSE, warning = FALSE}
+library("dplyr")
+```
+
+Then we read file and show sample data.
+```{r}
+data <- read.csv(file="data/ks-projects.csv", header=TRUE, sep=",")
+head(data, 3)
+```
+
+There are some columns, which are not necessary for the purpose of this analysis. 
+```{r}
+colnames(data)
+```
+
+Then we have to check if all data is correct. We check if there are NA values.
+```{r}
+for (i in colnames(data)) {
+  print(paste(i, ": ", length(na.omit(data$main_category)), "/", length(data$main_category), sep = ""))
+}
+```
+
+Now we have to check if data is valid in all columns.
+1. There are a lot of categories with just a few projects.
+```{r}
+as.vector(table(data$main_category))[1:30]
+```
+
+2. There are some invalid date values in 'deadline' columns.
+```{r}
+is.date <- function(x) !is.na(as.Date(x, format="%Y-%m-%d"))
+
+deadlineDates <- as.character(factor(unique(data$deadline)))
+deadlineDates[!is.date(deadlineDates)][1:10]
+```
+
+3. There are some invalid date values in 'launched' columns.
+```{r}
+launchedDates <- as.character(factor(unique(data$launched)))
+launchedDates[!is.date(launchedDates)][1:10]
+```
+
+4. There are also many states which are not state.
+```{r}
+factor(unique(data$state))[1:20]
+```
+
+5. There are some not valid 'goal' values.
+```{r warning = FALSE}
+x <- as.character(factor(data$goal))
+x[is.na(as.double(x))][1:10]
+```
+
+6. There are some not valid 'pledged' values.
+```{r warning = FALSE}
+x <- as.character(factor(data$pledged))
+x[is.na(as.double(x))][1:10]
+```
+
+7. There are some not valid 'backers' values.
+```{r warning = FALSE}
+x <- as.character(factor(data$backers))
+x[is.na(as.integer(x))][1:10]
+```
+
+Just check number of rows before preprocessing.
+```{r}
+nrow(data)
+```
+
+Now we have to do preprocessing.
+```{r}
+data <- data %>% 
+  select(4:11) %>% 
+  select(-2)
+data <- data[, c(1, 3, 5, 7, 6, 4, 2)]
+
+categoryFrequency <- as.list(table(data$main_category))
+data <- data %>% 
+  filter(categoryFrequency[main_category] > 100)
+
+data <- data %>% 
+  filter(is.date(deadline) & is.date(launched)) %>%
+  filter(format(as.Date(launched), "%Y") > 2000)
+
+data <- data %>% 
+  filter(state == "canceled" | 
+           state == "failed" | 
+           state == "live" | 
+           state == "successful" | 
+           state == "suspended")
+
+data <- data %>%
+  filter(!is.na(as.double(as.character(goal))))
+
+data <- data %>%
+  filter(!is.na(as.double(as.character(pledged))))
+
+data <- data %>%
+  filter(!is.na(as.integer(as.character(backers))))
+```
+
+Check number of rows after preprocessing.
+```{r}
+nrow(data)
+```
+
+Now we have only neccessary columns which we also reordered.
+```{r}
+colnames(data)
+```
+
+This is how 'main_category' column looks like. There are only categories we want to analyze.
+```{r}
+table(droplevels(data$main_category))
+```
+
+There are no more invalid data in the 'deadline' column.
+```{r}
+deadlineDates <- as.character(factor(unique(data$deadline)))
+deadlineDates[!is.date(deadlineDates)]
+```
+
+There are no more invalid data in the 'launched' column.
+```{r}
+launchedDates <- as.character(factor(unique(data$launched)))
+launchedDates[!is.date(launchedDates)]
+```
+
+This is how 'state' column looks like. There are only states we want to analyze.
+```{r}
+table(droplevels(data$state))
+```
+
+There are no more invalid data in the 'goal' column.
+```{r}
+x <- as.character(factor(data$goal))
+x[is.na(as.double(x))]
+```
+
+There are no more invalid data in the 'pledged' column.
+```{r}
+x <- as.character(factor(data$pledged))
+x[is.na(as.double(x))]
+```
+
+There are no more invalid data in the 'backers' column.
+```{r}
+x <- as.character(factor(data$backers))
+x[is.na(as.integer(x))]
+```
+
+The last thing to do is to convert all columns to valid data type
+```{r}
+data$goal <- as.double(data$goal)
+data$deadline <- as.Date(data$deadline)
+data$launched <- as.Date(data$launched)
+data$pledged <- as.double(data$pledged)
+data$backers <- as.double(data$backers)
+```
+
+## Summary data
+Present sample data.
+```{r}
+head(data)
+```
+
+Make general summary. Most of features are sufficiently explained in general summary.
+```{r}
+summary(data)
+```
+
+More detailed summary on 'main_category' column.
+```{r}
+summary(droplevels(data$main_category))
+```
+
+## Univariate analysis
+
+Projects by category
+```{r}
+data %>%
+  group_by(main_category) %>%
+  summarise(projects = n()) %>%
+  arrange(projects) %>%
+  with(barplot(projects, names.arg = main_category, xlab = "categories", ylab = "projects", main = "Projects by category", las = 2))
+```
+
+Projects by year
+```{r}
+data %>%
+  mutate(year = as.integer(format(launched, "%Y"))) %>%
+  group_by(year) %>%
+  summarise(projects = n()) %>%
+  arrange(year) %>%
+  with(plot(year, projects, type = "o", main = "Projects by year"))
+```
+
+Projects by month
+```{r}
+data %>%
+  mutate(month = format(launched, "%m")) %>%
+  group_by(month) %>%
+  summarise(projects = n()) %>%
+  arrange(month) %>%
+  with(barplot(projects, names.arg = month, xlab = "months", ylab = "projects", main = "Projects by month"))
+```
+
+Projects by state.
+```{r}
+data %>%
+  group_by(state) %>%
+  summarise(projects = n()) %>%
+  arrange(desc(projects)) %>%
+  with(pie(projects, state, col = rainbow(length(projects)), main = "Projects by state"))
+```
+
+Projects by goal amount.
+```{r}
+hist(data$goal, xlab = "goal", ylab = "projects", main = "Projects by goal amount", col = "grey")
+```
+
+Projects by pledged amount.
+```{r}
+hist(data$pledged, xlab = "pledged", ylab = "projects", main = "Projects by pledged amount", col = "grey")
+```
+
+Projects by backers number.
+```{r}
+hist(data$backers, xlab = "backers", ylab = "projects", main = "Projects by backers number", col = "grey")
+```
+
+## Multivariate analysis
