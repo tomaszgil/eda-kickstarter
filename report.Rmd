@@ -43,6 +43,9 @@ We have used a data set from Kaggle (https://www.kaggle.com/kemical/kickstarter-
 First of all we have to import packages.
 ```{r message = FALSE, warning = FALSE}
 library("dplyr")
+library("ggplot2")
+library("scales")
+library("Hmisc")
 ```
 
 Then we read file and show sample data.
@@ -128,10 +131,8 @@ data <- data %>%
 
 data <- data %>% 
   filter(state == "canceled" | 
-           state == "failed" | 
-           state == "live" | 
-           state == "successful" | 
-           state == "suspended")
+           state == "failed" |
+           state == "successful")
 
 data <- data %>%
   filter(!is.na(as.double(as.character(goal))))
@@ -195,6 +196,7 @@ x[is.na(as.integer(x))]
 
 The last thing to do is to convert all columns to valid data type
 ```{r}
+data$main_category <- as.factor(data$main_category)
 data$goal <- as.double(data$goal)
 data$deadline <- as.Date(data$deadline)
 data$launched <- as.Date(data$launched)
@@ -258,14 +260,29 @@ data %>%
   with(pie(projects, state, col = rainbow(length(projects)), main = "Projects by state"))
 ```
 
+Goal amount boxplot
+```{r}
+boxplot(data$goal, ylab = "goal", main = "Goal amount boxplot")
+```
+
 Projects by goal amount.
 ```{r}
 hist(data$goal, xlab = "goal", ylab = "projects", main = "Projects by goal amount", col = "grey")
 ```
 
+Pledged amount boxplot
+```{r}
+boxplot(data$pledged, ylab = "pledged", main = "Pledged amount boxplot")
+```
+
 Projects by pledged amount.
 ```{r}
 hist(data$pledged, xlab = "pledged", ylab = "projects", main = "Projects by pledged amount", col = "grey")
+```
+
+Backers number boxplot
+```{r}
+boxplot(data$backers, ylab = "backers", main = "Backers number boxplot")
 ```
 
 Projects by backers number.
@@ -274,3 +291,147 @@ hist(data$backers, xlab = "backers", ylab = "projects", main = "Projects by back
 ```
 
 ## Multivariate analysis
+Project state by category
+```{r}
+data %>%
+  group_by(main_category) %>%
+  summarise(sucessfull = sum(state == "successful"),
+            failed = sum(state == "failed"),
+            canceled = sum(state == "canceled"),
+            success_rate = round(sum(state == "successful") / n(), digits = 2),
+            failed_rate = round(sum(state == "failed") / n(), digits = 2),
+            canceled_rate = round(sum(state == "canceled") / n(), digits = 2))
+```
+
+```{r}
+plot1 <- data %>%
+  group_by(main_category, state) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count), label = scales::percent(percentage))
+
+ggplot(plot1, aes(x = factor(main_category, levels = levels(plot1$main_category)), 
+                  y = percentage,
+                  fill = factor(state, levels = levels(plot1$state)))) +
+  geom_bar(stat = "identity", position = "fill") + 
+  scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
+  geom_text(aes(label = label), size = 3, position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("successful" = "green", "failed" = "red", "canceled" = "blue")) +
+  labs(y = "Percent", fill = "State", x = "Category", title = "Project state by category") +
+  theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+```
+
+
+Project state by year
+```{r}
+data %>%
+  mutate(year = as.integer(format(launched, "%Y"))) %>%
+  group_by(year) %>%
+  summarise(sucessfull = sum(state == "successful"),
+            failed = sum(state == "failed"),
+            canceled = sum(state == "canceled"),
+            success_rate = round(sum(state == "successful") / n(), digits = 2),
+            failed_rate = round(sum(state == "failed") / n(), digits = 2),
+            canceled_rate = round(sum(state == "canceled") / n(), digits = 2)) %>%
+  arrange(year)
+```
+
+```{r}
+plot2 <- data %>%
+  mutate(year = as.integer(format(launched, "%Y"))) %>%
+  group_by(year, state) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count), label = scales::percent(percentage)) %>%
+  arrange(year)
+
+ggplot(plot2, aes(x = year, y = percentage)) +
+  geom_line(aes(color = state)) + 
+  scale_color_manual(values = c("successful" = "green", "failed" = "red", "canceled"="blue")) + 
+  scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
+  labs(y = "Percent", fill = "State", x = "Year", title = "Project state by year") + 
+  theme_minimal()
+```
+
+Project state by month
+```{r}
+data %>%
+  mutate(month = as.integer(format(launched, "%m"))) %>%
+  group_by(month) %>%
+  summarise(sucessfull = sum(state == "successful"),
+            failed = sum(state == "failed"),
+            canceled = sum(state == "canceled"),
+            success_rate = round(sum(state == "successful") / n(), digits = 2),
+            failed_rate = round(sum(state == "failed") / n(), digits = 2),
+            canceled_rate = round(sum(state == "canceled") / n(), digits = 2)) %>%
+  arrange(month)
+```
+
+```{r}
+plot3 <- data %>%
+  mutate(month = as.integer(format(launched, "%m"))) %>%
+  group_by(month, state) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count), label = scales::percent(percentage)) %>%
+  arrange(month)
+
+ggplot(plot3, aes(x = month, y = percentage)) +
+  geom_line(aes(color = state)) + 
+  scale_color_manual(values = c("successful" = "green", "failed" = "red", "canceled" = "blue")) + 
+  scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
+  labs(y = "Percent", fill = "State", x = "Month", title = "Project state by month") + 
+  theme_minimal()
+```
+
+Goal amount by category and state
+```{r}
+ggplot(data, aes(x = main_category, y = goal, fill = state)) +
+  geom_boxplot() + 
+  labs(fill = "Goal") + 
+  labs(y = "goal", fill = "state", x = "category", title = "Goal amount by category and state") + 
+  theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+```
+
+Pledged amount by category and state
+```{r}
+ggplot(data, aes(x = main_category, y = pledged, fill = state)) +
+  geom_boxplot() + 
+  labs(fill = "Pledged") + 
+  labs(y = "pledged", fill = "state", x = "category", title = "Pledged amount by category and state") + 
+  theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+```
+
+Backers number by category and state
+```{r}
+ggplot(data, aes(x = main_category, y = backers, fill = state)) +
+  geom_boxplot() + 
+  labs(fill = "Backers") + 
+  labs(y = "Backers", fill = "state", x = "category", title = "Backers number by category and state") + 
+  theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+```
+
+Project state by goal amount 
+```{r}
+getGroupNumber <- function(x) {
+  sapply(x, function(x) {
+    if      (x >= 0    & x < 1255) return(0)
+    else if (x >= 1255 & x < 3245) return(1)
+    else if (x >= 3245 & x < 4635) return(2)
+    else if (x >= 4635 & x < 5823) return(3)
+    else                           return(4)
+  })
+}
+
+plot5 <- data %>%
+  mutate(bin = as.factor(getGroupNumber(goal))) %>%
+  group_by(bin, state) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count), label = scales::percent(percentage))
+
+ggplot(plot5, aes(x = factor(bin, levels = levels(plot5$bin), labels = levels(cut2(data$goal, g = 5))), 
+                  y = percentage,
+                  fill = factor(state, levels = levels(plot5$state)))) +
+  geom_bar(stat = "identity", position = "fill") + 
+  scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
+  geom_text(aes(label = label), size = 3, position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("successful" = "green", "failed" = "red", "canceled" = "blue")) +
+  labs(y = "Percent", fill = "State", x = "Goal amount", title = "Project state by goal amount")
+```
