@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-This is a report from project "Exploratory Data Analysis" in R. The report contains six sections:
+This is a report from project "Exploratory Data Analysis" in R. It consists of the following sections:
 
 * Introduction
 * Preprocessing
@@ -21,15 +21,18 @@ This is a report from project "Exploratory Data Analysis" in R. The report conta
 * Conclusions
 
 ## Data description
-We have used a data set from Kaggle (https://www.kaggle.com/kemical/kickstarter-projects?fbclid=IwAR2xYRsLXeEKvpLpuQ7ONYRzUZsg5keYoskL6BGS29Do1f5tscFmcv40szo) which is connected with Kickstarter Platform projects
+We have used a data set from Kaggle, available under the following link:
+https://www.kaggle.com/kemical/kickstarter-projects?fbclid=IwAR2xYRsLXeEKvpLpuQ7ONYRzUZsg5keYoskL6BGS29Do1f5tscFmcv40szo.
+
+The data set aggregates information about most recent Kickstarter projects. Kickstarter is an crowdfunding website with projects of various size. Within the data set we have access to following attributes:
 
 * ID: internal kickstarter id 
-* name: name of project - A project is a finite work with a clear goal that you’d like to bring to life. Think albums, books, or films. 
+* name: name of project - a project is a finite work with a clear goal that you’d like to bring to life (albums, books, or films) 
 * category: category 
 * main_category: category of campaign 
 * currency: currency used to support 
 * deadline: deadline for crowdfunding 
-* goal: fundraising goal - The funding goal is the amount of money that a creator needs to complete their project. 
+* goal: fundraising goal - the funding goal is the amount of money that a creator needs to complete their project 
 * launched: date launched 
 * pledged: amount pledged by "crowd" 
 * state: Current condition the project is in 
@@ -40,7 +43,7 @@ We have used a data set from Kaggle (https://www.kaggle.com/kemical/kickstarter-
 
 ## Preprocessing
 
-First of all we have to import packages.
+First of all, we have to import packages.
 ```{r message = FALSE, warning = FALSE}
 library("dplyr")
 library("ggplot2")
@@ -67,7 +70,7 @@ for (i in colnames(data)) {
 ```
 
 Now we have to check if data is valid in all columns.
-1. There are a lot of categories with just a few projects.
+1. There are a lot of categories with just a few projects for each of them.
 ```{r}
 as.vector(table(data$main_category))[1:30]
 ```
@@ -86,35 +89,35 @@ launchedDates <- as.character(factor(unique(data$launched)))
 launchedDates[!is.date(launchedDates)][1:10]
 ```
 
-4. There are also many states which are not state.
+4. There are also many states which are either not valid or do not provide information needed for the purpose of this analysis.
 ```{r}
 factor(unique(data$state))[1:20]
 ```
 
-5. There are some not valid 'goal' values.
+5. There are some invalid 'goal' values.
 ```{r warning = FALSE}
 x <- as.character(factor(data$goal))
 x[is.na(as.double(x))][1:10]
 ```
 
-6. There are some not valid 'pledged' values.
+6. There are some invalid 'pledged' values.
 ```{r warning = FALSE}
 x <- as.character(factor(data$pledged))
 x[is.na(as.double(x))][1:10]
 ```
 
-7. There are some not valid 'backers' values.
+7. There are some invalid 'backers' values.
 ```{r warning = FALSE}
 x <- as.character(factor(data$backers))
 x[is.na(as.integer(x))][1:10]
 ```
 
-Just check number of rows before preprocessing.
+Now we check the number of rows before preprocessing for reference.
 ```{r}
 nrow(data)
 ```
 
-Now we have to do preprocessing.
+Now we perform the preprocessing.
 ```{r}
 data <- data %>% 
   select(4:11) %>% 
@@ -144,28 +147,28 @@ data <- data %>%
   filter(!is.na(as.integer(as.character(backers))))
 ```
 
-Check number of rows after preprocessing.
+Now we can check the number of rows after preprocessing.
 ```{r}
 nrow(data)
 ```
 
-Now we have only neccessary columns which we also reordered.
+As we see, we decreased the number of rows in the data. Now we have only neccessary columns which we also reordered.
 ```{r}
 colnames(data)
 ```
 
-This is how 'main_category' column looks like. There are only categories we want to analyze.
+This is how 'main_category' column looks like. Now there are only those categories we want to analyze.
 ```{r}
 table(droplevels(data$main_category))
 ```
 
-There are no more invalid data in the 'deadline' column.
+There is no more invalid data in the 'deadline' column.
 ```{r}
 deadlineDates <- as.character(factor(unique(data$deadline)))
 deadlineDates[!is.date(deadlineDates)]
 ```
 
-There are no more invalid data in the 'launched' column.
+There is no more invalid data in the 'launched' column.
 ```{r}
 launchedDates <- as.character(factor(unique(data$launched)))
 launchedDates[!is.date(launchedDates)]
@@ -176,25 +179,25 @@ This is how 'state' column looks like. There are only states we want to analyze.
 table(droplevels(data$state))
 ```
 
-There are no more invalid data in the 'goal' column.
+There is no more invalid data in the 'goal' column.
 ```{r}
 x <- as.character(factor(data$goal))
 x[is.na(as.double(x))]
 ```
 
-There are no more invalid data in the 'pledged' column.
+There is no more invalid data in the 'pledged' column.
 ```{r}
 x <- as.character(factor(data$pledged))
 x[is.na(as.double(x))]
 ```
 
-There are no more invalid data in the 'backers' column.
+There is no more invalid data in the 'backers' column.
 ```{r}
 x <- as.character(factor(data$backers))
 x[is.na(as.integer(x))]
 ```
 
-The last thing to do is to convert all columns to valid data type
+The last thing to do is to convert all columns to a valid data type.
 ```{r}
 data$main_category <- as.factor(data$main_category)
 data$goal <- as.double(data$goal)
@@ -204,25 +207,28 @@ data$pledged <- as.double(data$pledged)
 data$backers <- as.double(data$backers)
 ```
 
-## Summary data
-Present sample data.
+## Data summary
+
+First we take a look at the structure and content of first few rows in our data set after preprocessing.
 ```{r}
 head(data)
 ```
 
-Make general summary. Most of features are sufficiently explained in general summary.
+Then we can proceed to a general summary. Most of the features are sufficiently explained in general summary.
 ```{r}
 summary(data)
 ```
 
-More detailed summary on 'main_category' column.
+More detailed summary might be useful for 'main_category' column.
 ```{r}
 summary(droplevels(data$main_category))
 ```
 
 ## Univariate analysis
 
-Projects by category
+First element of the examination is univatiate analysis, where we check the crutial features with regards to their distribution and general basic statisticts. Having said so, the results presented in this section are self-explanatory.
+
+### Projects by category
 ```{r}
 data %>%
   group_by(main_category) %>%
@@ -231,7 +237,7 @@ data %>%
   with(barplot(projects, names.arg = main_category, xlab = "categories", ylab = "projects", main = "Projects by category", las = 2))
 ```
 
-Projects by year
+### Projects by year
 ```{r}
 data %>%
   mutate(year = as.integer(format(launched, "%Y"))) %>%
@@ -241,7 +247,7 @@ data %>%
   with(plot(year, projects, type = "o", main = "Projects by year"))
 ```
 
-Projects by month
+### Projects by month
 ```{r}
 data %>%
   mutate(month = format(launched, "%m")) %>%
@@ -251,7 +257,7 @@ data %>%
   with(barplot(projects, names.arg = month, xlab = "months", ylab = "projects", main = "Projects by month"))
 ```
 
-Projects by state.
+### Projects by state
 ```{r}
 data %>%
   group_by(state) %>%
@@ -260,38 +266,41 @@ data %>%
   with(pie(projects, state, col = rainbow(length(projects)), main = "Projects by state"))
 ```
 
-Goal amount boxplot
+### Goal amount boxplot
 ```{r}
 boxplot(data$goal, ylab = "goal", main = "Goal amount boxplot")
 ```
 
-Projects by goal amount.
+### Projects by goal amount
 ```{r}
 hist(data$goal, xlab = "goal", ylab = "projects", main = "Projects by goal amount", col = "grey")
 ```
 
-Pledged amount boxplot
+### Pledged amount boxplot
 ```{r}
 boxplot(data$pledged, ylab = "pledged", main = "Pledged amount boxplot")
 ```
 
-Projects by pledged amount.
+### Projects by pledged amount
 ```{r}
 hist(data$pledged, xlab = "pledged", ylab = "projects", main = "Projects by pledged amount", col = "grey")
 ```
 
-Backers number boxplot
+### Backers number boxplot
 ```{r}
 boxplot(data$backers, ylab = "backers", main = "Backers number boxplot")
 ```
 
-Projects by backers number.
+### Projects by backers number
 ```{r}
 hist(data$backers, xlab = "backers", ylab = "projects", main = "Projects by backers number", col = "grey")
 ```
 
 ## Multivariate analysis
-Project state by category
+
+Now we will take a closer look at the data, taking into consideration two or more features at the time, so that we can observe trends and dependencies.
+
+### Project state by category
 ```{r}
 data %>%
   group_by(main_category) %>%
@@ -320,8 +329,11 @@ ggplot(plot1, aes(x = factor(main_category, levels = levels(plot1$main_category)
   theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
 ```
 
+First we took a look at the number of successful, failed and canceled projects for each category. This gives us an insight into what is the rate of successful and unsuccessful projects with respect to project category. Moreover, those values can give an information about the probability that a project in given category will suceeed.
 
-Project state by year
+We can see that projects associated with Dance and Theater categories have the highest, more that 60% chance of success. On the other end of the spectrum we have technology projects with just over 20% chance of success, which is probably both higly competitive and saturated industry with crowdfunded projects recently. Also high chance of failure have projects related to Journalism, Crafts and Fashion. Interestingly, Game projects have the highest chance of getting cancelled.
+
+### Project state by year
 ```{r}
 data %>%
   mutate(year = as.integer(format(launched, "%Y"))) %>%
@@ -351,7 +363,12 @@ ggplot(plot2, aes(x = year, y = percentage)) +
   theme_minimal()
 ```
 
-Project state by month
+We can also observe how projects states changed over time, which can give us information on both the performance of the platform, good preparation and execution of the projects and overall interest in such form of projects support.
+We can quite clearly see changing trends, with the most notable raise in the number of unsuccessful projects up until the year 2015, to almost 60%. There has also been a gradual increase in the number of cancelled projects.
+
+Overall, we can claim that in the years 2009-2016 probably the best time to start a crowdfunding project on Kickstarter was year 2011, where there wa roughly 50% chance for success as well as for the failure.
+
+### Project state by month
 ```{r}
 data %>%
   mutate(month = as.integer(format(launched, "%m"))) %>%
@@ -381,7 +398,9 @@ ggplot(plot3, aes(x = month, y = percentage)) +
   theme_minimal()
 ```
 
-Goal amount by category and state
+An interesing information can also be extracted while examining the projects' states for each month. The highest changes of project failure falls into holiday months - summer's June, July and August and winter's December and February.
+
+### Goal amount by category and state
 ```{r}
 ggplot(data, aes(x = main_category, y = goal, fill = state)) +
   geom_boxplot() + 
@@ -390,7 +409,9 @@ ggplot(data, aes(x = main_category, y = goal, fill = state)) +
   theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
 ```
 
-Pledged amount by category and state
+Next, we wanted to see if there is any correlation between project category and the disctibution of goal, which is the amount of money project owner would like to gather. As we can see, values across most of the categories are uniorm with a few exceptions when it comes to median value.
+
+### Pledged amount by category and state
 ```{r}
 ggplot(data, aes(x = main_category, y = pledged, fill = state)) +
   geom_boxplot() + 
@@ -399,7 +420,12 @@ ggplot(data, aes(x = main_category, y = pledged, fill = state)) +
   theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
 ```
 
-Backers number by category and state
+Contrary to the previous chart, we can see certain dependencies on this one. First thing is that, naturally, successful projects have highest pledged amounts, followed by failed and cancelled projects. We can observe that across all categories.
+
+Looking deeper, typically here is a significant difference between the median for projects that have been cancelled and have failed. Exceptions to that rule would be Technology, Games and Design, where the distributions of pledged amout for cancelled and failed projects overlap. Design is the most interesing category amongs all in this regard, because as we can see on the chart, there is very little dependence in projects status on the amount that has actually been raised by the project owner.
+
+
+### Backers number by category and state
 ```{r}
 ggplot(data, aes(x = main_category, y = backers, fill = state)) +
   geom_boxplot() + 
@@ -408,7 +434,9 @@ ggplot(data, aes(x = main_category, y = backers, fill = state)) +
   theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
 ```
 
-Project state by goal amount 
+Similar conclusions can be drawn from comparing the backers amount for each category with regards to the number of backers - people that made a donation for a project. As we can see, Technology, Games and Design have very similar distribution when it comes to failed and successful projects. For the remaining categories, based on the fact that the median bakers number for cancelled projects is 0 (or rather close to 0 for a few of those), we can assume that that was the reason for for cancelling those projects.
+
+### Project state by goal amount 
 ```{r}
 getGroupNumber <- function(x) {
   sapply(x, function(x) {
@@ -435,3 +463,7 @@ ggplot(plot5, aes(x = factor(bin, levels = levels(plot5$bin), labels = levels(cu
   scale_fill_manual(values = c("successful" = "green", "failed" = "red", "canceled" = "blue")) +
   labs(y = "Percent", fill = "State", x = "Goal amount", title = "Project state by goal amount")
 ```
+
+As the last thing, we decided to examine if we there is any relation between the project goal and the state (for instace if projects with lower goal had a higher chance of success or not). As we can see, correlation between the project state and the goal isn't apparent.
+
+
