@@ -9,6 +9,20 @@ server <- function(input, output) {
   set.seed(122)
   data <- getData()
   
+  # checkboxes ------------------------------------------------------------------------------------
+  
+  categories = unique(data$main_category);
+  print(categories)
+  components = list()
+  for (i in 1:length(categories)){
+    inputId = paste0("chk_", i)
+    print(inputId)
+    components[[i]] <- checkboxInput(inputId, categories[[i]], value = TRUE, width = NULL)
+  }
+  print(components)
+  
+  output$checkboxes <- renderUI(components)
+  
   # plot 1 ----------------------------------------------------------------------------------------
   
   data %>%
@@ -39,65 +53,7 @@ server <- function(input, output) {
   
   # plot 2 ----------------------------------------------------------------------------------------
   
-  data %>%
-    mutate(year = as.integer(format(launched, "%Y"))) %>%
-    group_by(year) %>%
-    summarise(sucessfull = sum(state == "successful"),
-              failed = sum(state == "failed"),
-              canceled = sum(state == "canceled"),
-              success_rate = round(sum(state == "successful") / n(), digits = 2),
-              failed_rate = round(sum(state == "failed") / n(), digits = 2),
-              canceled_rate = round(sum(state == "canceled") / n(), digits = 2)) %>%
-    arrange(year)
-  
-  plot2 <- data %>%
-    mutate(year = as.integer(format(launched, "%Y"))) %>%
-    group_by(year, state) %>%
-    summarise(count = n()) %>%
-    mutate(percentage = count / sum(count), label = scales::percent(percentage)) %>%
-    arrange(year)
-  
   output$plot2 <- renderPlot({
-    ggplot(plot2, aes(x = year, y = percentage)) +
-      geom_line(aes(color = state)) + 
-      scale_color_manual(values = c("successful" = "green", "failed" = "red", "canceled"="blue")) + 
-      scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
-      labs(y = "Percent", fill = "State", x = "Year", title = "Project state by year") + 
-      theme_minimal()
-  })
-  
-  # plot 3 ----------------------------------------------------------------------------------------
-    
-  data %>%
-    mutate(month = as.integer(format(launched, "%m"))) %>%
-    group_by(month) %>%
-    summarise(sucessfull = sum(state == "successful"),
-              failed = sum(state == "failed"),
-              canceled = sum(state == "canceled"),
-              success_rate = round(sum(state == "successful") / n(), digits = 2),
-              failed_rate = round(sum(state == "failed") / n(), digits = 2),
-              canceled_rate = round(sum(state == "canceled") / n(), digits = 2)) %>%
-    arrange(month)
-
-  plot3 <- data %>%
-    mutate(month = as.integer(format(launched, "%m"))) %>%
-    group_by(month, state) %>%
-    summarise(count = n()) %>%
-    mutate(percentage = count / sum(count), label = scales::percent(percentage)) %>%
-    arrange(month)
-  
-  output$plot3 <- renderPlot({
-    ggplot(plot3, aes(x = month, y = percentage)) +
-      geom_line(aes(color = state)) + 
-      scale_color_manual(values = c("successful" = "green", "failed" = "red", "canceled" = "blue")) + 
-      scale_y_continuous(breaks = seq(0, 1, 0.2), labels = paste(seq(0, 100, 20), "%", sep = "")) +
-      labs(y = "Percent", fill = "State", x = "Month", title = "Project state by month") + 
-      theme_minimal()
-  })
-  
-  # plot 4 ----------------------------------------------------------------------------------------
-  
-  output$plot4 <- renderPlot({
     ggplot(data, aes(x = main_category, y = goal, fill = state)) +
       geom_boxplot() + 
       labs(fill = "Goal") + 
@@ -105,13 +61,37 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
   })
   
-  # plot 5 ----------------------------------------------------------------------------------------
+  # plot 3 ----------------------------------------------------------------------------------------
 
-  output$plot5 <- renderPlot({
+  output$plot3 <- renderPlot({
     ggplot(data, aes(x = main_category, y = pledged, fill = state)) +
       geom_boxplot() + 
       labs(fill = "Pledged") + 
       labs(y = "pledged", fill = "state", x = "category", title = "Pledged amount by category and state") + 
       theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+  })
+  
+  # plot 4 ----------------------------------------------------------------------------------------
+  
+  output$plot4 <- renderPlot({
+    ggplot(data, aes(x = main_category, y = backers, fill = state)) +
+      geom_boxplot() + 
+      labs(fill = "Backers") + 
+      labs(y = "Backers", fill = "state", x = "category", title = "Backers number by category and state") + 
+      theme(axis.text.x = element_text(angle = 290, hjust = 0, vjust = 0.5))
+  })
+  
+  # rawdata ---------------------------------------------------------------------------------------
+  
+  output$downloadCsv <- downloadHandler(
+    filename = "kickstarter.csv",
+    content = function(file) {
+      write.csv(data, file)
+    },
+    contentType = "text/csv"
+  )
+  
+  output$rawtable <- renderPrint({
+    print(head(data, input$maxrows), row.names = FALSE)
   })
 }
