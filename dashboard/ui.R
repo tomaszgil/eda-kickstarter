@@ -10,7 +10,22 @@ ui <- dashboardPage(
       menuItem("Plot 4", tabName = "t4", icon = icon("th")),
       menuItem("Raw data", tabName = "raw", icon = icon("th"))
     ),
-    uiOutput("checkboxes")
+    h3("Categories"),
+    checkboxInput("check1", "Art", value = TRUE, width = NULL),
+    checkboxInput("check2", "Comics", value = TRUE, width = NULL),
+    checkboxInput("check3", "Crafts", value = TRUE, width = NULL),
+    checkboxInput("check4", "Dance", value = TRUE, width = NULL),
+    checkboxInput("check5", "Design", value = TRUE, width = NULL),
+    checkboxInput("check6", "Fashion", value = TRUE, width = NULL),
+    checkboxInput("check7", "Film & video", value = TRUE, width = NULL),
+    checkboxInput("check8", "Food", value = TRUE, width = NULL),
+    checkboxInput("check9", "Games", value = TRUE, width = NULL),
+    checkboxInput("check10", "Journalism", value = TRUE, width = NULL),
+    checkboxInput("check11", "Music", value = TRUE, width = NULL),
+    checkboxInput("check12", "Philosophy", value = TRUE, width = NULL),
+    checkboxInput("check13", "Publishing", value = TRUE, width = NULL),
+    checkboxInput("check14", "Technology", value = TRUE, width = NULL),
+    checkboxInput("check15", "Theater", value = TRUE, width = NULL)
   ),
   dashboardBody(
     tabItems(
