@@ -30,16 +30,16 @@ ui <- dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName = "t1",
-              box(plotOutput("plot1", height = 450))
+              box(plotOutput("plot1", height = 800), width = "100%")
       ),
       tabItem(tabName = "t2",
-              box(plotOutput("plot2", height = 450))
+              box(plotOutput("plot2", height = 800), width = "100%")
       ),
       tabItem(tabName = "t3",
-              box(plotOutput("plot3", height = 450))
+              box(plotOutput("plot3", height = 800), width = "100%")
       ),
       tabItem(tabName = "t4",
-              box(plotOutput("plot4", height = 450))
+              box(plotOutput("plot4", height = 800), width = "100%")
       ),
       tabItem(tabName = "raw",
               h2("Raw data"),
